@@ -12,8 +12,8 @@ export type User = {
   roles?: string[] | string
   lastLogin?: Date
   lastPasswordChange?: Date
+  gender: 'm' | 'f' | 'n/a'
   emailVerified?: boolean
-  refreshToken?: string
   googleId?: string
   createdAt?: Date
   updatedAt?: Date

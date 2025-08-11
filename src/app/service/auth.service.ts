@@ -127,6 +127,7 @@ export class AuthService implements IAuthUseCase {
       address: data.address,
       lang: data.lang,
       imageUrl: data.imageUrl,
+      gender: data.gender ?? 'n/a',
       isActive: false,
       emailVerified: false,
       roles: data.roles || [],

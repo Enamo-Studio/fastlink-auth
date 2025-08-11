@@ -12,11 +12,11 @@ export async function up(knex: Knex): Promise<void> {
     table.string('lang', 10).nullable();
     table.string('image_url').nullable();
     table.boolean('is_active').defaultTo(true).nullable();
+    table.enum('gender', ['m', 'f', 'n/a']).defaultTo('n/a').notNullable();
     table.json('roles').nullable();
     table.timestamp('last_login').nullable();
     table.timestamp('last_password_change').nullable();
     table.boolean('email_verified').defaultTo(false).nullable();
-    table.string('refresh_token').nullable();
     table.string('google_id').nullable();
     table.timestamp('created_at').defaultTo(knex.fn.now()).nullable();
     table.timestamp('updated_at').defaultTo(knex.fn.now()).nullable();

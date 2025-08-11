@@ -12,4 +12,5 @@ export const COMMON = {
 export const TABLE_NAME = {
   USERS: 'users',
   REFRESH_TOKENS: 'refresh_tokens',
+  ROLE_POLICIES: 'role_policies'
 }
