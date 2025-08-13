@@ -7,6 +7,8 @@ export type UserSqlEntity = {
   phone?: string
   address?: string
   lang?: string
+  ktp?: string
+  npwp?: string
   gender: 'm' | 'f' | 'n/a'
   image_url?: string
   is_active?: boolean

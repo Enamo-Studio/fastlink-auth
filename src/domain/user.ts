@@ -9,6 +9,8 @@ export type User = {
   lang?: string
   imageUrl?: string
   isActive?: boolean
+  ktp?: string
+  npwp?: string
   roles?: string[] | string
   lastLogin?: Date
   lastPasswordChange?: Date

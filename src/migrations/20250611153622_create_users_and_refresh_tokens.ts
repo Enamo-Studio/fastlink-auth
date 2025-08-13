@@ -11,6 +11,8 @@ export async function up(knex: Knex): Promise<void> {
     table.text('address').nullable();
     table.string('lang', 10).nullable();
     table.string('image_url').nullable();
+    table.text('ktp').nullable();
+    table.text('npwp').nullable();
     table.boolean('is_active').defaultTo(true).nullable();
     table.enum('gender', ['m', 'f', 'n/a']).defaultTo('n/a').notNullable();
     table.json('roles').nullable();
