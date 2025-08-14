@@ -72,9 +72,10 @@ export class AuthService implements IAuthUseCase {
 
 
     const refreshTokenResult = await this.handleRefreshToken(user.id, tracing, traceId);
+    const lastLogin  = new Date();
 
     await this.userSqlAdapter.update(user.id, {
-      lastLogin: new Date(),
+      lastLogin: lastLogin,
     }, traceId);
 
     return {
@@ -88,7 +89,7 @@ export class AuthService implements IAuthUseCase {
         imageUrl: user.imageUrl,
         isActive: user.isActive,
         roles: user.roles as string[],
-        lastLogin: user.lastLogin,
+        lastLogin: lastLogin,
       },
       accessToken: {
         token: accessToken,
@@ -128,6 +129,8 @@ export class AuthService implements IAuthUseCase {
       lang: data.lang,
       imageUrl: data.imageUrl,
       gender: data.gender ?? 'n/a',
+      ktp: data.ktp,
+      npwp: data.npwp,
       isActive: false,
       emailVerified: false,
       roles: data.roles || [],
@@ -386,7 +389,7 @@ export class AuthService implements IAuthUseCase {
   async getMe(id: number, traceId?: string): Promise<UserLoginResponse> { 
     logger.info(this.getMe.name, AuthService.name, traceId);
     const user = await this.userSqlAdapter.getById(id, traceId);
-
+    
     if (!user) {
       throw new ApplicationError(HttpError('User not found').UNPROCESSABLE_ENTITY);
     }
