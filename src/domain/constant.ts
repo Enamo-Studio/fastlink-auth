@@ -14,3 +14,14 @@ export const TABLE_NAME = {
   REFRESH_TOKENS: 'refresh_tokens',
   ROLE_POLICIES: 'role_policies'
 }
+
+export const SERVICE_CODE = {
+  COMPLAINT: 'CMP',
+  NEW_INSTALL: 'INS',
+  NEW_LINE: 'LIN',
+  LOGISTIC: 'LOG'
+}
+
+export const REF_FORMAT = {
+  TICKET: 'ticket'
+}
