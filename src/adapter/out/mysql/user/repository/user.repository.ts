@@ -61,7 +61,7 @@ export class UserSqlRepository implements IUserSqlRepository {
     const result = await this.orm
       .clone()
       .where((builder) => {
-        builder.where("username", usernameOrEmail).orWhere("email", usernameOrEmail);
+        builder.where("email", usernameOrEmail)
       })
       .first()
       .then((result) => result ?? null);

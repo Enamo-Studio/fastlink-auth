@@ -23,17 +23,17 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('refresh_tokens', (table) => {
     table.increments('id').primary();
     table
-      .bigInteger('user_id')
+      .integer('user_id')
       .unsigned()
       .notNullable()
       .references('id')
-      .inTable('users')
+      .inTable('user')
       .onDelete('CASCADE');
     table.string('token').notNullable();
-    table.integer('expired_at', 11).nullable();
-    table.integer('last_login', 11).nullable();
-    table.integer('created_at', 11).defaultTo(knex.raw('UNIX_TIMESTAMP()')).nullable();
-    table.integer('updated_at', 11).defaultTo(knex.raw('UNIX_TIMESTAMP()')).nullable();
+    table.integer('expired_at').nullable();
+    table.integer('last_login').nullable();
+    table.integer('created_at').nullable();
+    table.integer('updated_at').nullable();
     table.string('user_agent').nullable();
     table.string('ip_address').nullable();
     table.string('mac_address').nullable();

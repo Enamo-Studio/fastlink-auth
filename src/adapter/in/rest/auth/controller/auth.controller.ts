@@ -9,6 +9,7 @@ import { errorHandler } from "@util/error/error_handler"
 import { globalAuthMiddleware } from "@util/middlewares/global_auth"
 import { Request, Response, Express } from "express"
 import { refreshTokenMiddleware } from "../middleware/refresh_token.middleware"
+import { validateSignature } from "@util/middlewares/signature"
 
 export class AuthRestController implements BaseController {
   private app: Express
@@ -20,12 +21,12 @@ export class AuthRestController implements BaseController {
   }
 
   init(): void {
-    this.app.post("/auth/login", this.handleLogin.bind(this))
-    this.app.post("/auth/register", this.handleRegister.bind(this))
+    this.app.post("/auth/login", validateSignature, this.handleLogin.bind(this))
+    this.app.post("/auth/register", validateSignature, this.handleRegister.bind(this))
 
     this.app.post("/auth/logout", globalAuthMiddleware,  this.handleLogout.bind(this))
     this.app.put("/auth/change-password", globalAuthMiddleware, this.handleChangePassword.bind(this))
-    this.app.get("/auth/me", globalAuthMiddleware, this.handleGetMe.bind(this))
+    this.app.get("/auth/me", globalAuthMiddleware, validateSignature, this.handleGetMe.bind(this))
 
     this.app.post("/auth/verify-otp", this.handleVerifyOtp.bind(this))
     this.app.post("/auth/resend-otp", this.handleResendOtp.bind(this))

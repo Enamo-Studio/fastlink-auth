@@ -10,8 +10,8 @@ export async function up(knex: Knex): Promise<void> {
     table.text('desc').nullable();
     table.integer('module_id').unsigned().nullable();
     table.string('base_path').nullable();
-    table.integer('created_at', 11).defaultTo(knex.raw('UNIX_TIMESTAMP()')).nullable();
-    table.integer('updated_at', 11).defaultTo(knex.raw('UNIX_TIMESTAMP()')).nullable();
+    table.integer('created_at').nullable();
+    table.integer('updated_at').nullable();
   });
 }
 
