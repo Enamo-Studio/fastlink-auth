@@ -9,6 +9,7 @@ export const toDomain = (entity: RefreshTokenSqlEntity): RefreshToken => {
     userAgent: entity.user_agent,
     ipAddress: entity.ip_address,
     macAddress: entity.mac_address,
+    lastLogin: entity.last_login,
     expiredAt: entity.expired_at,
     createdAt: entity.created_at,
     updatedAt: entity.updated_at
@@ -23,6 +24,7 @@ export const toEntity = (domain: RefreshToken): RefreshTokenSqlEntity => {
     user_agent: domain.userAgent,
     ip_address: domain.ipAddress,
     mac_address: domain.macAddress,
+    last_login: domain.lastLogin,
     expired_at: domain.expiredAt,
     created_at: domain.createdAt,
     updated_at: domain.updatedAt
@@ -37,6 +39,7 @@ export const toPartialEntity = (domain: Partial<RefreshToken>): Partial<RefreshT
     user_agent: domain.userAgent,
     ip_address: domain.ipAddress,
     mac_address: domain.macAddress,
+    last_login: domain.lastLogin,
     expired_at: domain.expiredAt,
     created_at: domain.createdAt,
     updated_at: domain.updatedAt
@@ -51,6 +54,7 @@ export const toPartialDomain = (entity: Partial<RefreshTokenSqlEntity>): Partial
     userAgent: entity.user_agent,
     ipAddress: entity.ip_address,
     macAddress: entity.mac_address,
+    lastLogin: entity.last_login,
     expiredAt: entity.expired_at,
     createdAt: entity.created_at,
     updatedAt: entity.updated_at

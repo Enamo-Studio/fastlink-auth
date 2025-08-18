@@ -10,9 +10,10 @@ export const COMMON = {
 }
 
 export const TABLE_NAME = {
-  USERS: 'users',
+  USERS: 'user',
   REFRESH_TOKENS: 'refresh_tokens',
-  ROLE_POLICIES: 'role_policies'
+  ROLE_POLICIES: 'role_policies',
+  ROLE_GROUPS: 'role_group'
 }
 
 export const SERVICE_CODE = {

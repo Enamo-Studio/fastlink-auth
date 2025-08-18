@@ -11,5 +11,5 @@ export interface IRefreshTokenSqlRepository {
 
   getByUserId(userId: number, traceId?: string): Promise<RefreshTokenSqlEntity | null>
   getByToken(token: string, traceId?: string): Promise<RefreshTokenSqlEntity | null>
-  
+  updateByCustomField(field: string, value: any, data: Partial<RefreshTokenSqlEntity>, traceId?: string): Promise<Partial<RefreshTokenSqlEntity> | null>
 }

@@ -18,11 +18,15 @@ import { buildSendOtpEmailHTML } from "src/view/send_otp";
 import { config } from "@config";
 import { MailAdapter } from "@adapter_out/mailer/adapter";
 import { cacheData, delCache, getFromCache } from "@util/redis/redis";
+import { getUnixTimeStamp, unixToDate } from "@util/helper/moment";
+import { IRoleGroupMySQLAdapter } from "@adapter_out/mysql/role_group/adapter/role_group_mysql.base_adapter";
+import { RoleGroupMySQLAdapter } from "@adapter_out/mysql/role_group/adapter/role_group_mysql.adapter";
 
 export class AuthService implements IAuthUseCase {
   private readonly userSqlAdapter: IUserSqlAdapter;
   private readonly refreshTokenSqlAdapter: IRefreshTokenSqlAdapter;
   private readonly mailAdapter: MailAdapter;
+  private readonly roleGroupAdapter: IRoleGroupMySQLAdapter;
 
   private expiredRefreshToken: number = 30
   private senderEmail = config.mail.sender
@@ -31,6 +35,7 @@ export class AuthService implements IAuthUseCase {
     this.userSqlAdapter = new UserSqlAdapter();
     this.refreshTokenSqlAdapter = new RefreshTokenSqlAdapter();
     this.mailAdapter = new MailAdapter();
+    this.roleGroupAdapter = new RoleGroupMySQLAdapter()
   }
   
   async login(data: Partial<User>, tracing: Tracing, traceId?: string): Promise<UserLoginResponse> {
@@ -40,11 +45,7 @@ export class AuthService implements IAuthUseCase {
       throw new ApplicationError(HttpError('User/password required').BAD_REQUEST)
     }
 
-    if(!data.username && !data.password) {
-      throw new ApplicationError(HttpError('User/password required').BAD_REQUEST)
-    }
-
-    const usernameOrEmail = data.username || data.email;
+    const usernameOrEmail = data.email;
 
     if (!usernameOrEmail) {
       throw new ApplicationError(HttpError('Username or email required').BAD_REQUEST)
@@ -64,43 +65,32 @@ export class AuthService implements IAuthUseCase {
       throw new ApplicationError(HttpError('User is not active').UNPROCESSABLE_ENTITY);
     } 
 
+    if(!user.roleId) {
+      throw new ApplicationError(HttpError('User role not found').UNPROCESSABLE_ENTITY);
+    }
+
+    const roleGroup = await this.roleGroupAdapter.getById(parseInt(user.roleId), traceId);
+
+    if(!roleGroup) {
+      throw new ApplicationError(HttpError('Role group not found').UNPROCESSABLE_ENTITY);
+    }
+
     const accessToken = await generateAccessToken({
       id: user.id.toString(),
       email: user.email,
-      roles: user.roles as string[],
+      roles: [roleGroup?.roleName] as string[],
     });
 
 
     const refreshTokenResult = await this.handleRefreshToken(user.id, tracing, traceId);
-    const lastLogin  = new Date();
-
-    await this.userSqlAdapter.update(user.id, {
-      lastLogin: lastLogin,
-    }, traceId);
-
-    return {
-      user: {
-        username: user.username,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        address: user.address,
-        lang: user.lang,
-        imageUrl: user.imageUrl,
-        isActive: user.isActive,
-        roles: user.roles as string[],
-        lastLogin: lastLogin,
-      },
-      accessToken: {
-        token: accessToken,
-        expiresIn: moment().add(24, 'hours').toDate(),
-      },
-      refreshToken: {
-        token: refreshTokenResult.token,
-        expiresIn: refreshTokenResult.expiredAt,
-      }
-    }
+    const lastLogin  = getUnixTimeStamp();
   
+    await this.refreshTokenSqlAdapter.updateByCustomField('user_id', user.id, {
+      lastLogin: lastLogin,
+    });
+
+    return this.buildUserLoginResponse(user, refreshTokenResult, accessToken, lastLogin, roleGroup?.roleName);
+
   }
   
   async register(data: Partial<User>, tracing: Tracing, traceId?: string): Promise<{otpSignature: string}> {
@@ -110,7 +100,7 @@ export class AuthService implements IAuthUseCase {
       throw new ApplicationError(HttpError('Email, password and name are required').BAD_REQUEST);
     }
 
-    const existingUser = await this.userSqlAdapter.getByUsernameOrEmail(data.username || data.email, traceId);
+    const existingUser = await this.userSqlAdapter.getByUsernameOrEmail(data.email, traceId);
 
     if (existingUser) {
       throw new ApplicationError(HttpError('User already exists').UNPROCESSABLE_ENTITY);
@@ -121,21 +111,18 @@ export class AuthService implements IAuthUseCase {
     const newUser: User = {
       id: 0,
       name: data.name,
-      username: data.username,
       email: data.email,
       password: hashedPassword,
-      phone: data.phone,
-      address: data.address,
-      lang: data.lang,
-      imageUrl: data.imageUrl,
-      gender: data.gender ?? 'n/a',
-      ktp: data.ktp,
-      npwp: data.npwp,
-      isActive: false,
-      emailVerified: false,
-      roles: data.roles || [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      noServices: data.noServices || '',
+      phone: data.phone ?? '', 
+      address: data.address ?? '',
+      lang: data.lang ?? 'indonesia',
+      image: data.image ?? '',
+      gender: data.gender ?? '',
+      dateCreated: getUnixTimeStamp(),
+      roleId: data.roleId ?? '',
+      isActive: 0,
+      codephone: data.codephone ?? '62',
     };
 
     const insertedUser = await this.userSqlAdapter.create(newUser, traceId);
@@ -170,36 +157,21 @@ export class AuthService implements IAuthUseCase {
       throw new ApplicationError(HttpError('User not found').UNPROCESSABLE_ENTITY);
     }
 
+    const roleGroup = await this.roleGroupAdapter.getById(parseInt(user.roleId), traceId);
+
+    if(!roleGroup) {
+      throw new ApplicationError(HttpError('Role group not found').UNPROCESSABLE_ENTITY);
+    }
+    
     refreshTokenData = await this.handleRefreshToken(user.id, tracing, traceId);
 
     const accessToken = await generateAccessToken({
       id: user.id.toString(),
       email: user.email,
-      roles: user.roles as string[],
+      roles: [roleGroup?.roleName] as string[],
     });
 
-    return {
-      user: {
-        username: user.username,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        address: user.address,
-        lang: user.lang,
-        imageUrl: user.imageUrl,
-        isActive: user.isActive,
-        roles: user.roles as string[],
-        lastLogin: user.lastLogin,
-      },
-      accessToken: {
-        token: accessToken,
-        expiresIn: moment().add(24, 'hours').toDate(),
-      },
-      refreshToken: {
-        token: refreshTokenData.token,
-        expiresIn: refreshTokenData.expiredAt,
-      }
-    }
+    return this.buildUserLoginResponse(user, refreshTokenData, accessToken, refreshTokenData.lastLogin || getUnixTimeStamp(), roleGroup?.roleName);
   }
 
   async changePassword(id: number, data: {oldPassword: string, newPassword: string},  traceId?: string): Promise<void>{
@@ -222,8 +194,6 @@ export class AuthService implements IAuthUseCase {
 
     await this.userSqlAdapter.update(id, {
       password: newPassword,
-      lastPasswordChange: new Date(),
-      updatedAt: new Date()
     }, traceId)
 
   }
@@ -237,13 +207,13 @@ export class AuthService implements IAuthUseCase {
               token: newRefreshToken,
               ipAddress: tracing.ipAddress,
               userAgent: tracing.userAgent,
-              expiredAt: moment().add(this.expiredRefreshToken, 'days').toDate(),
+              expiredAt: moment().add(this.expiredRefreshToken, 'days').unix(),
           })
         }
         
         return token
       } else {
-        let expiredAt = moment().add(this.expiredRefreshToken, 'days').toDate();
+        let expiredAt = moment().add(this.expiredRefreshToken, 'days').unix();
         let token = uuidv4();
 
         let refreshToken = {
@@ -252,8 +222,9 @@ export class AuthService implements IAuthUseCase {
           expiredAt: expiredAt,
           userAgent: tracing.userAgent,
           ipAddress: tracing.ipAddress,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          lastLogin: getUnixTimeStamp(),
+          createdAt: getUnixTimeStamp(),
+          updatedAt: getUnixTimeStamp()
         }
 
         await this.refreshTokenSqlAdapter.create(refreshToken, traceId);
@@ -332,9 +303,7 @@ export class AuthService implements IAuthUseCase {
     await delCache(`OTP:${userId}`);
 
     await this.userSqlAdapter.update(parseInt(userId), {
-      emailVerified: true,
-      isActive: true,
-      updatedAt: new Date(),
+      isActive: 1,
     }, traceId);
 
     return `OTP verified`;
@@ -379,8 +348,6 @@ export class AuthService implements IAuthUseCase {
 
     await this.userSqlAdapter.update(parseInt(userId), {
       password: hashedPassword,
-      lastPasswordChange: new Date(),
-      updatedAt: new Date(),
     }, traceId);
 
     await delCache(`OTP:${userId}`);
@@ -394,20 +361,53 @@ export class AuthService implements IAuthUseCase {
       throw new ApplicationError(HttpError('User not found').UNPROCESSABLE_ENTITY);
     }
 
+    const roleGroup = await this.roleGroupAdapter.getById(parseInt(user.roleId), traceId);
+
+    if (!roleGroup) {
+      throw new ApplicationError(HttpError('Role group not found').UNPROCESSABLE_ENTITY);
+    }
+
+    const refreshTokenData = await this.refreshTokenSqlAdapter.getByUserId(user.id, traceId);
+
+    if (!refreshTokenData) {
+      throw new ApplicationError(HttpError('Refresh token not found').UNPROCESSABLE_ENTITY);
+    }
+
     return {
       user: {
-        username: user.username,
         name: user.name,
         email: user.email,
         phone: user.phone,
         address: user.address,
         lang: user.lang,
-        imageUrl: user.imageUrl,
-        isActive: user.isActive,
-        roles: user.roles as string[],
-        lastLogin: user.lastLogin,
-      }
+        image: user.image,
+        roles: [roleGroup.roleName] as string[],
+        lastLogin: unixToDate(refreshTokenData.lastLogin ?? getUnixTimeStamp()),
+      },
     };
+  }
+
+  buildUserLoginResponse(user: User, refreshToken: RefreshToken, accessToken: string, lastLogin: number, roleName: string ): UserLoginResponse {
+    return {
+      user: {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        lang: user.lang,
+        image: user.image,
+        roles: [roleName] as string[],
+        lastLogin: unixToDate(lastLogin),
+      },
+      accessToken: {
+        token: accessToken,
+        expiresIn: moment().add(24, 'hours').toDate(),
+      },
+      refreshToken: {
+        token: refreshToken.token,
+        expiresIn: unixToDate(refreshToken.expiredAt),
+      }
+    }
   }
 
 }

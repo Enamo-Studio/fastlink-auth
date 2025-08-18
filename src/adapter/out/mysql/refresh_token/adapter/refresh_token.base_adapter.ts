@@ -11,4 +11,5 @@ export interface IRefreshTokenSqlAdapter {
 
   getByUserId(userId: number, traceId?: string): Promise<RefreshToken | null>
   getByToken(token: string, traceId?: string): Promise<RefreshToken | null>
+  updateByCustomField(field: string, value: any, data: Partial<RefreshToken>, traceId?: string): Promise<Partial<RefreshToken> | null>
 }

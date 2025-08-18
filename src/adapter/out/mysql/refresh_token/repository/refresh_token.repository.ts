@@ -85,6 +85,17 @@ export class RefreshTokenSqlRepository implements IRefreshTokenSqlRepository {
       .first()
       .then((result) => result ?? null);
   }
+
+  async updateByCustomField(field: string, value: any, data: Partial<RefreshTokenSqlEntity>, traceId?: string): Promise<Partial<RefreshTokenSqlEntity> | null> {
+    logger.info(this.updateByCustomField.name, RefreshTokenSqlRepository.name, traceId);
+  
+    await this.orm
+      .clone()
+      .where({ [field]: value })
+      .update(data);
+
+    return this.getByToken(value, traceId);
+  }
   
   async create(data: RefreshTokenSqlEntity, traceId?: string): Promise<RefreshTokenSqlEntity> {
     logger.info(this.create.name, RefreshTokenSqlRepository.name, traceId);

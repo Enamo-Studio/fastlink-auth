@@ -1,24 +1,19 @@
 export type User = {
   id: number
-  name: string
-  username?: string
   email: string
   password: string
-  phone?: string
-  address?: string
-  lang?: string
-  imageUrl?: string
-  isActive?: boolean
-  ktp?: string
-  npwp?: string
-  roles?: string[] | string
-  lastLogin?: Date
-  lastPasswordChange?: Date
-  gender: 'm' | 'f' | 'n/a'
-  emailVerified?: boolean
-  googleId?: string
-  createdAt?: Date
-  updatedAt?: Date
+  name: string
+  phone: string
+  address: string
+  image: string
+  roleId: string
+  isActive: number
+  dateCreated: number
+  gender: 'Male' | 'Female' | ''
+  noServices: string
+  lang: string
+  codephone: string
+  referrer?: string | null
 }
 
 export type Tracing = {
@@ -35,9 +30,8 @@ export type UserLoginResponse = {
     phone?: string,
     address?: string,
     lang?: string,
-    imageUrl?: string,
-    isActive?: boolean,
-    roles?: string[] | string,
+    image?: string,
+    roles?: string[]
     lastLogin?: Date,
   },
   refreshToken?: TokenPayload,

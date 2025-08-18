@@ -1,27 +1,23 @@
 import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable('users', (table) => {
-    table.bigIncrements('id').primary();
-    table.string('name').notNullable();
-    table.string('username').notNullable();
-    table.string('email').notNullable().unique();
-    table.string('password').notNullable();
-    table.string('phone').nullable();
-    table.text('address').nullable();
-    table.string('lang', 10).nullable();
-    table.string('image_url').nullable();
-    table.text('ktp').nullable();
-    table.text('npwp').nullable();
-    table.boolean('is_active').defaultTo(true).nullable();
-    table.enum('gender', ['m', 'f', 'n/a']).defaultTo('n/a').notNullable();
-    table.json('roles').nullable();
-    table.timestamp('last_login').nullable();
-    table.timestamp('last_password_change').nullable();
-    table.boolean('email_verified').defaultTo(false).nullable();
-    table.string('google_id').nullable();
-    table.timestamp('created_at').defaultTo(knex.fn.now()).nullable();
-    table.timestamp('updated_at').defaultTo(knex.fn.now()).nullable();
+   await knex.schema.createTable('user', (table) => {
+    table.increments('id').primary();
+    table.text('email').notNullable();
+    table.text('password').notNullable();
+    table.text('name').notNullable();
+    table.text('phone').notNullable();
+    table.text('address').notNullable();
+    table.text('image').notNullable();
+    table.text('role_id').notNullable();
+    table.integer('is_active').notNullable();
+    table.integer('date_created').notNullable();
+    table.enu('gender', ['Male', 'Female', '']).notNullable();
+    table.text('no_services').notNullable();
+    table.text('lang').notNullable();
+    table.text('codephone').notNullable();
+    table.text('referrer').nullable();
+    table.charset('utf8mb3');
   });
 
   await knex.schema.createTable('refresh_tokens', (table) => {
@@ -34,9 +30,10 @@ export async function up(knex: Knex): Promise<void> {
       .inTable('users')
       .onDelete('CASCADE');
     table.string('token').notNullable();
-    table.timestamp('expired_at').notNullable();
-    table.timestamp('created_at').defaultTo(knex.fn.now()).nullable();
-    table.timestamp('updated_at').defaultTo(knex.fn.now()).nullable();
+    table.integer('expired_at', 11).nullable();
+    table.integer('last_login', 11).nullable();
+    table.integer('created_at', 11).defaultTo(knex.raw('UNIX_TIMESTAMP()')).nullable();
+    table.integer('updated_at', 11).defaultTo(knex.raw('UNIX_TIMESTAMP()')).nullable();
     table.string('user_agent').nullable();
     table.string('ip_address').nullable();
     table.string('mac_address').nullable();

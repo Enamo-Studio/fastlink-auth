@@ -65,5 +65,13 @@ export class RefreshTokenSqlAdapter implements IRefreshTokenSqlAdapter {
     logger.info(this.delete.name, RefreshTokenSqlAdapter.name, traceId);
     return await this.refreshTokenPgRepository.delete(id, traceId);
   }
+
+  async updateByCustomField(field: string, value: any, data: Partial<RefreshToken>, traceId?: string): Promise<Partial<RefreshToken> | null> {
+    logger.info(this.updateByCustomField.name, RefreshTokenSqlAdapter.name, traceId);
+    const refreshToken = await this.refreshTokenPgRepository.updateByCustomField(field, value, toPartialEntity(data), traceId);
+    if (!refreshToken) return null;
+
+    return toPartialDomain(refreshToken);
+  }
   
 }
