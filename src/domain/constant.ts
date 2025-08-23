@@ -13,7 +13,9 @@ export const TABLE_NAME = {
   USERS: 'user',
   REFRESH_TOKENS: 'refresh_tokens',
   ROLE_POLICIES: 'role_policies',
-  ROLE_GROUPS: 'role_group'
+  ROLE_GROUPS: 'role_group',
+  WORKER_STATUS: 'worker_status',
+  REPORT_HISTORY: 'report_histories',
 }
 
 export const SERVICE_CODE = {

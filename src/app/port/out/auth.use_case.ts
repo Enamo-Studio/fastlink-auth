@@ -1,7 +1,7 @@
 import { Tracing, User, UserLoginResponse } from "@domain/user"
 
 export interface IAuthUseCase {
-  login(data: Partial<User>, tracing: Tracing, traceId?: string): Promise<UserLoginResponse>
+  login(data: Partial<User>, tracing: Tracing, traceId?: string): Promise<UserLoginResponse | { otpSignature: string}>
   register(data: Partial<User>, tracing: Tracing, traceId?: string): Promise<{otpSignature: string}> 
   logout(accessToken: string, refreshToken: string, traceId?: string): Promise<void>
   

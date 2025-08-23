@@ -6,4 +6,6 @@ export type Filter = {
   sortOrder?: number | string
   isActive?: boolean
   fields?: string[]
+  status?: number
+  workerId?: number
 }

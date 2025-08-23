@@ -21,12 +21,15 @@ import { cacheData, delCache, getFromCache } from "@util/redis/redis";
 import { getUnixTimeStamp, unixToDate } from "@util/helper/moment";
 import { IRoleGroupMySQLAdapter } from "@adapter_out/mysql/role_group/adapter/role_group_mysql.base_adapter";
 import { RoleGroupMySQLAdapter } from "@adapter_out/mysql/role_group/adapter/role_group_mysql.adapter";
-
+import { IWorkerStatusMySQLAdapter } from "@adapter_out/mysql/worker_status/adapter/worker_status_mysql.base_adapter";
+import { WorkerStatusMySQLAdapter } from "@adapter_out/mysql/worker_status/adapter/worker_status_mysql.adapter";
+import { WorkerStatusEnum } from "@domain/worker_status";
 export class AuthService implements IAuthUseCase {
   private readonly userSqlAdapter: IUserSqlAdapter;
   private readonly refreshTokenSqlAdapter: IRefreshTokenSqlAdapter;
   private readonly mailAdapter: MailAdapter;
   private readonly roleGroupAdapter: IRoleGroupMySQLAdapter;
+  private readonly workerStatusAdapter: IWorkerStatusMySQLAdapter
 
   private expiredRefreshToken: number = 30
   private senderEmail = config.mail.sender
@@ -36,9 +39,10 @@ export class AuthService implements IAuthUseCase {
     this.refreshTokenSqlAdapter = new RefreshTokenSqlAdapter();
     this.mailAdapter = new MailAdapter();
     this.roleGroupAdapter = new RoleGroupMySQLAdapter()
+    this.workerStatusAdapter = new WorkerStatusMySQLAdapter()
   }
   
-  async login(data: Partial<User>, tracing: Tracing, traceId?: string): Promise<UserLoginResponse> {
+  async login(data: Partial<User>, tracing: Tracing, traceId?: string): Promise<UserLoginResponse | { otpSignature: string}> {
     logger.info(this.login.name, AuthService.name, traceId);
     
     if(!data.email && !data.password) {
@@ -62,7 +66,9 @@ export class AuthService implements IAuthUseCase {
     }
 
     if(!user.isActive){
-      throw new ApplicationError(HttpError('User is not active').UNPROCESSABLE_ENTITY);
+      const otpCode = await this.handleOtp(user.id, user.name, user.email, false, traceId);
+
+      return { otpSignature: otpCode }
     } 
 
     if(!user.roleId) {
@@ -301,6 +307,27 @@ export class AuthService implements IAuthUseCase {
     }
 
     await delCache(`OTP:${userId}`);
+
+    const userData = await this.userSqlAdapter.getById(parseInt(userId), traceId);
+
+    if (!userData) {
+      throw new ApplicationError(HttpError('User not found').UNPROCESSABLE_ENTITY);
+    }
+
+
+    const roleData = await this.roleGroupAdapter.getById(parseInt(userData.roleId), traceId);
+
+    if(roleData !== undefined  && roleData?.roleName === 'Teknisi') {
+      await this.workerStatusAdapter.create({
+        workerId: parseInt(userId),
+        longitude: null,
+        latitude: null,
+        status: WorkerStatusEnum.OFFLINE,
+        createdAt: getUnixTimeStamp(),
+        updatedAt: getUnixTimeStamp(),
+      }, traceId)
+
+    }
 
     await this.userSqlAdapter.update(parseInt(userId), {
       isActive: 1,

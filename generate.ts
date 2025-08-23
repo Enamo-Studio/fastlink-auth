@@ -753,7 +753,7 @@ export interface I${domainCamel}${modeTitle}Adapter {
   delete(id: number, traceId?: string): Promise<boolean>
 }
 `;
-
+const varName = capitalizeFirstLetter(domainCamel)
 const adapterContent = `
 import { logger } from "@logger";
 import { I${domainCamel}${modeTitle}Repository as I${domainCamel}${modeTitle}Repository } from "../repository/${domainSnake}_${mode}.base_repository";
@@ -765,14 +765,14 @@ import { toDomain, toEntity, toPartialDomain, toPartialEntity } from "../util/${
 import { Stats } from "@domain/stats";
 
 export class ${domainCamel}${modeTitle}Adapter implements I${domainCamel}${modeTitle}Adapter {
-  private ${domainCamel}SqlRepository: I${domainCamel}${modeTitle}Repository
+  private ${varName}SqlRepository: I${domainCamel}${modeTitle}Repository
 
   constructor(){
-    this.${domainCamel}SqlRepository = new ${domainCamel}${modeTitle}Repository();
+    this.${varName}SqlRepository = new ${domainCamel}${modeTitle}Repository();
   }
   async getAll(currentPage?: number, perPage?: number, filter?: Filter, traceId?: string): Promise<{ data: ${domainCamel}[]; stats: Stats; }> {
     logger.info(this.getAll.name, ${domainCamel}${modeTitle}Adapter.name, traceId);
-    const { data, stats } = await this.${domainCamel}SqlRepository.getAll(currentPage, perPage, filter, traceId);
+    const { data, stats } = await this.${varName}SqlRepository.getAll(currentPage, perPage, filter, traceId);
 
     return {
       data: data.map((${domainSnake}) => toDomain(${domainSnake})),
@@ -782,7 +782,7 @@ export class ${domainCamel}${modeTitle}Adapter implements I${domainCamel}${modeT
   
   async getById(id: number, traceId?: string): Promise<${domainCamel} | null> {
     logger.info(this.getById.name, ${domainCamel}${modeTitle}Adapter.name, traceId);
-    const ${domainSnake} = await this.${domainCamel}SqlRepository.getById(id, traceId);
+    const ${domainSnake} = await this.${varName}SqlRepository.getById(id, traceId);
     if (!${domainSnake}) return null;
 
     return toDomain(${domainSnake});
@@ -790,12 +790,12 @@ export class ${domainCamel}${modeTitle}Adapter implements I${domainCamel}${modeT
   
   async create(data: ${domainCamel}, traceId?: string): Promise<${domainCamel}> {
     logger.info(this.create.name, ${domainCamel}${modeTitle}Adapter.name, traceId);
-    return toDomain(await this.${domainCamel}SqlRepository.create(toEntity(data), traceId));
+    return toDomain(await this.${varName}SqlRepository.create(toEntity(data), traceId));
   }
   
   async update(id: number, data: Partial<${domainCamel}>, traceId?: string): Promise<Partial<${domainCamel}> | null> {
     logger.info(this.update.name, ${domainCamel}${modeTitle}Adapter.name, traceId);
-    const ${domainSnake} = await this.${domainCamel}SqlRepository.update(id, toPartialEntity(data), traceId);
+    const ${domainSnake} = await this.${varName}SqlRepository.update(id, toPartialEntity(data), traceId);
     if (!${domainSnake}) return null;
 
     return toPartialDomain(${domainSnake});
@@ -803,7 +803,7 @@ export class ${domainCamel}${modeTitle}Adapter implements I${domainCamel}${modeT
   
   async delete(id: number, traceId?: string): Promise<boolean> {
     logger.info(this.delete.name, ${domainCamel}${modeTitle}Adapter.name, traceId);
-    return await this.${domainCamel}SqlRepository.delete(id, traceId);
+    return await this.${varName}SqlRepository.delete(id, traceId);
   }
   
 }
@@ -977,12 +977,15 @@ export const queryToFilter = (req: Request): Filter => {
 
   console.log("✔️ Generation complete.");
 }
+function capitalizeFirstLetter(val: string) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
 
- function mkdirSync(dir: string, arg1: { recursive: boolean; }) {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: arg1.recursive });
-    }
-    return dir;
+function mkdirSync(dir: string, arg1: { recursive: boolean; }) {
+  if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: arg1.recursive });
   }
+  return dir;
+}
 
 
