@@ -16,6 +16,7 @@ export const TABLE_NAME = {
   ROLE_GROUPS: 'role_group',
   WORKER_STATUS: 'worker_status',
   REPORT_HISTORY: 'report_histories',
+  MESSAGE: 'messages',
 }
 
 export const SERVICE_CODE = {
