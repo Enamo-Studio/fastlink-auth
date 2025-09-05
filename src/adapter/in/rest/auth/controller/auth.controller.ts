@@ -9,7 +9,7 @@ import { errorHandler } from "@util/error/error_handler"
 import { globalAuthMiddleware } from "@util/middlewares/global_auth"
 import { Request, Response, Express } from "express"
 import { refreshTokenMiddleware } from "../middleware/refresh_token.middleware"
-import { validateSignature } from "@util/middlewares/signature"
+import { signatureMiddleware } from "@util/middlewares/signature"
 
 export class AuthRestController implements BaseController {
   private app: Express
@@ -21,12 +21,13 @@ export class AuthRestController implements BaseController {
   }
 
   init(): void {
-    this.app.post("/auth/login", validateSignature, this.handleLogin.bind(this))
-    this.app.post("/auth/register", validateSignature, this.handleRegister.bind(this))
+    this.app.get("/auth/me", globalAuthMiddleware, signatureMiddleware, this.handleGetMe.bind(this))
 
-    this.app.post("/auth/logout", globalAuthMiddleware,  this.handleLogout.bind(this))
     this.app.put("/auth/change-password", globalAuthMiddleware, this.handleChangePassword.bind(this))
-    this.app.get("/auth/me", globalAuthMiddleware, validateSignature, this.handleGetMe.bind(this))
+
+    this.app.post("/auth/login", signatureMiddleware, this.handleLogin.bind(this))
+    this.app.post("/auth/register", signatureMiddleware, this.handleRegister.bind(this))
+    this.app.post("/auth/logout", globalAuthMiddleware,  this.handleLogout.bind(this))
 
     this.app.post("/auth/verify-otp", this.handleVerifyOtp.bind(this))
     this.app.post("/auth/resend-otp", this.handleResendOtp.bind(this))
@@ -47,6 +48,12 @@ export class AuthRestController implements BaseController {
 
       const result = await this.authService.login(data, tracing, getLogTraceId())
       const response = dataToRestResponse(result)
+
+      if ("otpSignature" in result) {
+        res.status(200).json(response)
+        return
+      }
+      
       res
           .cookie("refreshToken", result.refreshToken, {
             secure: true,
@@ -60,9 +67,8 @@ export class AuthRestController implements BaseController {
             sameSite: 'none',
             domain: config.app.appCookieUrl ?? 'localhost'
           })
+          .status(200)
           .json(response)
-      
-      res.status(200).json(response)
     } catch (error) {
       errorHandler(error, res)
     }

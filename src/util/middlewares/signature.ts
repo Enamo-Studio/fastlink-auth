@@ -23,7 +23,7 @@ function hmac512(sts: string): string {
 
 const SECRET_KEY = config.app.appSalt;
 
-export function validateSignature(req: any, res: any, next: any) {
+export function signatureMiddleware(req: any, res: any, next: any) {
   try {
     const timestamp = req.headers["x-timestamp"] as string;
     const signature = req.headers["x-signature"] as string;
