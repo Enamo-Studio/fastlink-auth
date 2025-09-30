@@ -6,6 +6,7 @@ import dotenv from "dotenv"
 
 import cookieParser from 'cookie-parser';
 import { loggingMiddleware } from './src/util/logger/logging';
+import { signatureMiddleware } from './src/util/middlewares/signature';
 import { initMysql } from './src/util/mysql/mysql';
 import { initMongo } from './src/util/mongodb/mongodb';
 
@@ -27,6 +28,7 @@ app.use(fileUpload())
 app.use(cookieParser())
 
 app.use(loggingMiddleware)
+app.use(signatureMiddleware);
 
 // Init configuration
 initMysql()
