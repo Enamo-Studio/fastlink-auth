@@ -56,12 +56,14 @@ export class AuthService implements IAuthUseCase {
     }
 
     const user = await this.userSqlAdapter.getByUsernameOrEmail(usernameOrEmail, traceId);
+    console.log(data)
+    
     
     if (!user) {
       throw new ApplicationError(HttpError('User not found').UNPROCESSABLE_ENTITY);
     }
 
-    if(!data.password || !Bcrypt.compare(data.password, user.password)){
+    if(!data.password || !await Bcrypt.compare(data.password, user.password)){
       throw new ApplicationError(HttpError('Invalid credentials').UNAUTHORIZED);
     }
 
@@ -129,6 +131,7 @@ export class AuthService implements IAuthUseCase {
       roleId: data.roleId ?? '',
       isActive: 0,
       codephone: data.codephone ?? '62',
+      referrer: data.referrer ?? null
     };
 
     const insertedUser = await this.userSqlAdapter.create(newUser, traceId);
@@ -188,7 +191,7 @@ export class AuthService implements IAuthUseCase {
       throw new ApplicationError(HttpError('User not found').UNPROCESSABLE_ENTITY)
     }
 
-    if(!Bcrypt.compareSync(data.oldPassword, user.password)){
+    if(!await Bcrypt.compareSync(data.oldPassword, user.password)){
       throw new ApplicationError(HttpError('Old password not match').UNPROCESSABLE_ENTITY)
     }
 
