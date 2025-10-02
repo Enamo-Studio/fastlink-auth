@@ -97,7 +97,7 @@ export class WorkerStatusMySQLRepository implements IWorkerStatusMySQLRepository
       );
       
       const [rows] = await promiseConnection.query(
-        'SELECT * FROM ?? WHERE id = ?', 
+        'SELECT * FROM ?? WHERE worker_id = ?', 
         [this.tableName, insertResult.insertId]
       );
       
